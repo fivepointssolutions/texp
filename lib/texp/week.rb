@@ -4,6 +4,8 @@ module TExp
   class Week < Base
     register_parse_callback('k')
 
+    attr_reader :weeks
+
     def initialize(weeks)
       @weeks = listize(weeks)
     end

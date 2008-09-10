@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'test/unit'
-require 'texp'
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class OperatorsTest < Test::Unit::TestCase
   def setup

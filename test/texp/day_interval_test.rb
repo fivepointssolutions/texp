@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'test/texp_tests'
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class DayIntervalTest < Test::Unit::TestCase
 

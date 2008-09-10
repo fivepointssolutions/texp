@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'test/unit'
-require 'date'
-require 'texp'
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
+
 require 'flexmock/test_unit'
 
 ######################################################################
@@ -95,11 +94,43 @@ class ParseTest < Test::Unit::TestCase
     assert_equal Date.parse("Feb 14, 2008"), TExp.parse("2008-02-14")
   end
 
-  def test_parse_interval
+  def test_parse_day_interval
     te = TExp.parse("2008-02-14,2i")
     assert te.includes?(@date)
     assert ! te.includes?(@date+1)
     assert te.includes?(@date+2)
+  end
+
+  def test_parse_month_interval
+    te = TExp.parse("2008-02-14,1,0x")
+    assert te.includes?(@date)
+    assert ! te.includes?(@date+1)
+    assert te.includes?(@date+29)
+    assert ! te.includes?(@date+30)
+  end
+
+  def test_parse_month_interval_ignore_day_in_recurrence
+    te = TExp.parse("2008-02-14,1,1x")
+    assert te.includes?(@date)
+    assert te.includes?(@date+1)
+    assert te.includes?(@date+29)
+    assert te.includes?(@date+30)
+  end
+
+  def test_parse_year_interval
+    te = TExp.parse("2008-02-14,1,0z")
+    assert te.includes?(@date)
+    assert ! te.includes?(@date+1)
+    assert ! te.includes?(@date+365)
+    assert te.includes?(@date+366)
+  end
+
+  def test_parse_year_interval_ignore_day_in_recurrence
+    te = TExp.parse("2008-02-14,1,1x")
+    assert te.includes?(@date)
+    assert te.includes?(@date+1)
+    assert te.includes?(@date+365)
+    assert te.includes?(@date+366)
   end
 
   def test_parse_day_of_month

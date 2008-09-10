@@ -156,9 +156,48 @@ module TExp
       TExp::DayOfWeek.new(normalize_dows(dow))
     end
 
-    def every(n, unit, start_date=Date.today)
-      value = apply_units(unit, n)
-      TExp::DayInterval.new(start_date, value)
+    # Return a temporal expression matching the given interval of units,
+    # anchored to the start date. The third argument may be a Date to start on,
+    # or a Hash of options including:
+    #
+    # <tt>:start_date</tt> - The Date to anchor.
+    # <tt>:days</tt>       - The days of the month to match (anything day() receives)
+    # <tt>:months</tt>     - The months of the year to match (anything month() receives)
+    #
+    #   every(3, :days)        # Match any date at 3 day intervals
+    #   every(3, :weeks)       # Match any date at 7 day intervals
+    #   every(3, :months)      # Match any date that is the same day of the
+    #                            month of the start date, at 3 month intervals
+    #
+    #   every(3, :months, :days => [2,7,18]))   # Match the 2nd, 7th, and 18th
+    #                                             at three month intervals
+    #
+    #   every(2, :years, :months => [1,4,7,10]) # Match Jan,Apr,Jul,Oct every
+    #                                             other year
+    #
+    def every(interval, unit, start_date_or_options = nil)
+      case start_date_or_options
+      when Date
+        start_date, options = start_date_or_options, {}
+      when Hash
+        start_date, options = Date.today, start_date_or_options
+      else
+        start_date, options = Date.today, {}
+      end
+      
+      case unit
+      when :year, :years
+        match_months_in_year = !options[:months].nil?
+        exp = TExp::YearInterval.new(start_date, interval, match_months_in_year)
+        match_months_in_year ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), month(*options[:months]))) : exp
+      when :month, :months
+        match_days_in_month = !options[:days].nil?
+        exp = TExp::MonthInterval.new(start_date, interval, match_days_in_month)
+        match_days_in_month ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), day(*options[:days]))) : exp
+      else
+        value = apply_units(unit, interval)
+        TExp::DayInterval.new(start_date, value)
+      end
     end
 
     # Evaluate a temporal expression in the TExp environment.

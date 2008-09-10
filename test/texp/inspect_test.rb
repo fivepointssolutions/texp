@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'test/unit'
-require 'date'
-require 'texp'
-require 'flexmock/test_unit'
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 ######################################################################
 class InspectTest < Test::Unit::TestCase

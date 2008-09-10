@@ -1,5 +1,6 @@
-require 'test/unit'
-require 'texp'
+#!/usr/bin/env ruby
+
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class BaseEachTest < Test::Unit::TestCase
   def test_each_on_base

@@ -2,6 +2,8 @@ module TExp
   class DayOfMonth < Base
     register_parse_callback('d')
 
+    attr_reader :days
+
     def initialize(days)
       @days = listize(days)
     end

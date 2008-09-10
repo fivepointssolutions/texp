@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'date'
-require 'test/unit'
-require 'texp'
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class WindowTest < Test::Unit::TestCase
 

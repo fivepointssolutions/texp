@@ -1,5 +1,6 @@
-require 'test/texp_tests'
-require 'texp'
+#!/usr/bin/env ruby
+
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class BuilderTest < Test::Unit::TestCase
   def test_day_builder
@@ -209,21 +210,38 @@ class BuilderTest < Test::Unit::TestCase
   end
 
   def test_interval_builder_with_months
-    date = d("Mar 1, 2008")
+    date = d("Feb 29, 2008")
     te = TExp.every(3, :months).reanchor(date)
 
-    assert_includes te, date, date+3*30, date+6*30
+    assert_includes te, date, date+(3*29+3), date+(6*29+8)
     assert_not_includes te, date-3, date-2, date-1, date+1, date+2, date+3, date+4
-    assert_not_includes te, date+1*30, date+2*30, date+4*30
+    assert_not_includes te, date+1*29, date+(2*29+2), date+(4*29+5)
   end
 
   def test_interval_builder_with_years
-    date = d("Mar 1, 2008")
+    date = d("March 1 2007")
     te = TExp.every(3, :years).reanchor(date)
 
-    assert_includes te, date, date+3*365, date+6*365
+    assert_includes te, date, date+(3*365+1), date+(6*365+2)
     assert_not_includes te, date-3, date-2, date-1, date+1, date+2, date+3, date+4
-    assert_not_includes te, date+1*365, date+2*365, date+4*365
+    assert_not_includes te, date+1*365, date+(1*365+1), date+2*365, date+(2*365+1), date+4*365, date+(7*365+2)
+  end
+
+  def test_interval_builder_with_months_and_days
+    date = d("Feb 29, 2008")
+    te = TExp.every(3, :months, :days => [3,15,31]).reanchor(date)
+
+    assert_includes te, date, d("May 3, 2008"), d("May 15, 2008"), d("May 31, 2008"), d("Nov 3, 2008"), d("Nov 15, 2008"), d("Feb 3, 2009"), d("Feb 15, 2009")
+    assert_not_includes te, d("Mar 3, 2008"), d("Mar 15, 2008"), d("Mar 31, 2008"), d("Nov 30, 2008")
+    assert_not_includes te, d("Feb 3, 2008"), d("Feb 15, 2008"), d("Feb 28, 2009")
+  end
+
+  def test_interval_builder_with_years_and_months
+    date = d("March 1 2007")
+    te = TExp.every(3, :years, :months => [1,4]).reanchor(date)
+    
+    assert_includes te, date, d("Apr 1, 2007"), d("Jan 1, 2010"), d("Apr 1, 2010")
+    assert_not_includes te, d("Jan 1, 2008"), d("Apr 1, 2008"), d("Jan 1, 2009")
   end
 
   def test_window_builder

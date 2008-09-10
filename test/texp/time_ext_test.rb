@@ -1,5 +1,6 @@
-require 'test/texp_tests'
-require 'texp'
+#!/usr/bin/env ruby
+
+require File.expand_path(File.dirname(__FILE__)) + '/../texp_tests'
 
 class TimeExtTest < Test::Unit::TestCase
   def test_time_to_date

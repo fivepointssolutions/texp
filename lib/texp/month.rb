@@ -2,6 +2,8 @@ module TExp
   class Month < Base
     register_parse_callback('m')
 
+    attr_reader :months
+
     def initialize(months)
       @months = listize(months)
     end

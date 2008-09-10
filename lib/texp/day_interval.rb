@@ -2,7 +2,7 @@ module TExp
   class DayInterval < Base
     register_parse_callback('i')
 
-    attr_reader :base_date
+    attr_reader :base_date, :interval
 
     def initialize(base_date, interval)
       @base_date = base_date.kind_of?(Date) ? base_date : nil

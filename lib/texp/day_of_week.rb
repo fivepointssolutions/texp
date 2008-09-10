@@ -2,6 +2,8 @@ module TExp
   class DayOfWeek < Base
     register_parse_callback('w')
 
+    attr_reader :days
+
     def initialize(days)
       @days = listize(days)
     end
