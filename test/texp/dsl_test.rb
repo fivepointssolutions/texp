@@ -227,6 +227,14 @@ class BuilderTest < Test::Unit::TestCase
     assert_not_includes te, date+1*365, date+(1*365+1), date+2*365, date+(2*365+1), date+4*365, date+(7*365+2)
   end
 
+  def test_interval_builder_with_weeks_and_wdays
+    date = d("Feb 29, 2008")
+    te = TExp.every(3, :weeks, :wdays => [2,6]).reanchor(date)
+
+    assert_includes te, date, d("Mar 1, 2008"), d("Mar 18, 2008"), d("Mar 22, 2008"), d("Apr 8, 2008"), d("Apr 12, 2008"), d("Feb 21, 2009")
+    assert_not_includes te, d("Mar 4, 2008"), d("Mar 11, 2008"), d("Mar 15, 2008"), d("Feb 28, 2009")
+  end
+
   def test_interval_builder_with_months_and_days
     date = d("Feb 29, 2008")
     te = TExp.every(3, :months, :days => [3,15,31]).reanchor(date)

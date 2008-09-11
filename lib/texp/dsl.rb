@@ -160,20 +160,25 @@ module TExp
     # anchored to the start date. The third argument may be a Date to start on,
     # or a Hash of options including:
     #
-    # <tt>:start_date</tt> - The Date to anchor.
-    # <tt>:days</tt>       - The days of the month to match (anything day() receives)
-    # <tt>:months</tt>     - The months of the year to match (anything month() receives)
+    # <tt>:start_date</tt> - The Date to anchor. Defaults to Date.today if not provided
+    # <tt>:days</tt>       - The days of the month to match (anything DSL#day receives)
+    # <tt>:months</tt>     - The months of the year to match (anything DSL#month receives)
+    # <tt>:wdays</tt>      - The days of the week to match (anything DSL#dow receives)
+    #
+    # <b>Examples:</b>
     #
     #   every(3, :days)        # Match any date at 3 day intervals
     #   every(3, :weeks)       # Match any date at 7 day intervals
     #   every(3, :months)      # Match any date that is the same day of the
     #                            month of the start date, at 3 month intervals
+    #   every(3, :months, :days => [2,7,18]))   # Match the 2nd, 7th, and 18th at three
+    #                                             month intervals
+    #   every(2, :years, :months => [1,4,7,10]) # Match Jan,Apr,Jul,Oct every other year
+    #   every(2, :weeks, :wdays => [0,6])       # Match Sun, Sat every other week
     #
-    #   every(3, :months, :days => [2,7,18]))   # Match the 2nd, 7th, and 18th
-    #                                             at three month intervals
-    #
-    #   every(2, :years, :months => [1,4,7,10]) # Match Jan,Apr,Jul,Oct every
-    #                                             other year
+    # The expression returned will match the provided start_date, and when re-anchored,
+    # will match the new anchor date instead. It is the responsibility of the sender to
+    # make the anchor date match on of the provided :days, :months, or :wdays.
     #
     def every(interval, unit, start_date_or_options = nil)
       case start_date_or_options
@@ -194,6 +199,10 @@ module TExp
         match_days_in_month = !options[:days].nil?
         exp = TExp::MonthInterval.new(start_date, interval, match_days_in_month)
         match_days_in_month ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), day(*options[:days]))) : exp
+      when :week, :weeks
+        match_days_in_week = !options[:wdays].nil?
+        exp = TExp::WeekInterval.new(start_date, interval, match_days_in_week)
+        match_days_in_week ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), dow(*options[:wdays]))) : exp
       else
         value = apply_units(unit, interval)
         TExp::DayInterval.new(start_date, value)
