@@ -193,30 +193,26 @@ module TExp
       when Date
         start_date, options = start_date_or_options, {}
       when Hash
-        start_date, options = Date.today, start_date_or_options
+        start_date, options = start_date_or_options[:start_date] || Date.today, start_date_or_options
       else
         start_date, options = Date.today, {}
       end
 
+      options.update :start_date => start_date, :interval => interval
+
       case unit
       when :year, :years
-        range = options[:range] || begin
-          month(*options[:months]) if options[:months]
+        apply_interval TExp::YearInterval, :months, options do
+          month(*options[:months])
         end
-        exp = TExp::YearInterval.new(start_date, interval, !range.nil?)
-        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       when :month, :months
-        range = options[:range] || begin
-          day(*options[:days]) if options[:days]
+        apply_interval TExp::MonthInterval, :days, options do
+          day(*options[:days])
         end
-        exp = TExp::MonthInterval.new(start_date, interval, !range.nil?)
-        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       when :week, :weeks
-        range = options[:range] || begin
-          dow(*options[:wdays]) if options[:wdays]
+        apply_interval TExp::WeekInterval, :wdays, options do
+          dow(*options[:wdays])
         end
-        exp = TExp::WeekInterval.new(start_date, interval, !range.nil?)
-        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       else
         value = apply_units(unit, interval)
         TExp::DayInterval.new(start_date, value)
@@ -268,6 +264,15 @@ module TExp
 
     def apply_units(unit, value)
       UNIT_MULTIPLIERS[unit] * value
+    end
+
+    def apply_interval(interval_type, range_name, options, &range_builder)
+      range = options[:range]
+      if range.nil? && options[range_name] && range_builder
+        range = range_builder.call
+      end
+      exp = interval_type.new(options[:start_date], options[:interval], !range.nil?)
+      range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(options[:start_date]), range))
     end
 
     def try_parsing(string)

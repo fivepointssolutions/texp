@@ -260,6 +260,10 @@ class BuilderTest < Test::Unit::TestCase
     assert_not_includes te, d("Feb 1, 2009"), d("Apr 26, 2009")
   end
 
+  def test_interval_builder_with_start_date
+    assert_includes TExp.every(3, :years, :start_date => d("Feb 1 2008")), d("Feb 1 2008"), d("Feb 1 2011")
+  end
+
   def test_window_builder
     date = Date.today
     te = TExp.on(date).window(1,2)
