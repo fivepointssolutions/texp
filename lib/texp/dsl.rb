@@ -160,10 +160,16 @@ module TExp
     # anchored to the start date. The third argument may be a Date to start on,
     # or a Hash of options including:
     #
-    # <tt>:start_date</tt> - The Date to anchor. Defaults to Date.today if not provided
-    # <tt>:days</tt>       - The days of the month to match (anything DSL#day receives)
-    # <tt>:months</tt>     - The months of the year to match (anything DSL#month receives)
-    # <tt>:wdays</tt>      - The days of the week to match (anything DSL#dow receives)
+    # <tt>:start_date</tt> - The Date to anchor. Defaults to Date.today if not provided.
+    # <tt>:days</tt>       - The days of the month to match (anything DSL#day receives).
+    #                        Only works for :month/:months.
+    # <tt>:months</tt>     - The months of the year to match (anything DSL#month receives).
+    #                        Only works for :year/:years.
+    # <tt>:wdays</tt>      - The days of the week to match (anything DSL#dow receives).
+    #                        Only works for :week/:weeks
+    # <tt>:range</tt>      - The days of the range to match (any temporal expression).
+    #                        Works for all but :day/:days, and cannot be combined with
+    #                        the :days, :months, or :wdays options.
     #
     # <b>Examples:</b>
     #
@@ -175,10 +181,12 @@ module TExp
     #                                             month intervals
     #   every(2, :years, :months => [1,4,7,10]) # Match Jan,Apr,Jul,Oct every other year
     #   every(2, :weeks, :wdays => [0,6])       # Match Sun, Sat every other week
+    #   every(2, :weeks, :range => (dow('Tuesday') * week(:first)))
     #
     # The expression returned will match the provided start_date, and when re-anchored,
     # will match the new anchor date instead. It is the responsibility of the sender to
-    # make the anchor date match on of the provided :days, :months, or :wdays.
+    # make the anchor date match on the first of the provided :days, :months, :wdays, or
+    # :range options.
     #
     def every(interval, unit, start_date_or_options = nil)
       case start_date_or_options
@@ -189,20 +197,26 @@ module TExp
       else
         start_date, options = Date.today, {}
       end
-      
+
       case unit
       when :year, :years
-        match_months_in_year = !options[:months].nil?
-        exp = TExp::YearInterval.new(start_date, interval, match_months_in_year)
-        match_months_in_year ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), month(*options[:months]))) : exp
+        range = options[:range] || begin
+          month(*options[:months]) if options[:months]
+        end
+        exp = TExp::YearInterval.new(start_date, interval, !range.nil?)
+        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       when :month, :months
-        match_days_in_month = !options[:days].nil?
-        exp = TExp::MonthInterval.new(start_date, interval, match_days_in_month)
-        match_days_in_month ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), day(*options[:days]))) : exp
+        range = options[:range] || begin
+          day(*options[:days]) if options[:days]
+        end
+        exp = TExp::MonthInterval.new(start_date, interval, !range.nil?)
+        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       when :week, :weeks
-        match_days_in_week = !options[:wdays].nil?
-        exp = TExp::WeekInterval.new(start_date, interval, match_days_in_week)
-        match_days_in_week ? TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), dow(*options[:wdays]))) : exp
+        range = options[:range] || begin
+          dow(*options[:wdays]) if options[:wdays]
+        end
+        exp = TExp::WeekInterval.new(start_date, interval, !range.nil?)
+        range.nil? ? exp : TExp::And.new(exp, TExp::Or.new(TExp::AnchorDate.new(start_date), range))
       else
         value = apply_units(unit, interval)
         TExp::DayInterval.new(start_date, value)

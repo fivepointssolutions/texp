@@ -252,6 +252,14 @@ class BuilderTest < Test::Unit::TestCase
     assert_not_includes te, d("Jan 1, 2008"), d("Apr 1, 2008"), d("Jan 1, 2009")
   end
 
+  def test_interval_build_with_range
+    date = d("Feb 1 2008")
+    te = TExp.every(3, :years, :range => TExp.dow('Sunday')).reanchor(date)
+    
+    assert_includes te, date, d("Feb 3, 2008"), d("Feb 10, 2008"), d("Apr 27, 2008"), d("Feb 2, 2014"), d("Feb 9, 2014"), d("Apr 27, 2014")
+    assert_not_includes te, d("Feb 1, 2009"), d("Apr 26, 2009")
+  end
+
   def test_window_builder
     date = Date.today
     te = TExp.on(date).window(1,2)
