@@ -101,6 +101,21 @@ class ParseTest < Test::Unit::TestCase
     assert te.includes?(@date+2)
   end
 
+  def test_parse_week_interval
+    te = TExp.parse("2008-02-14,1,0u")
+    assert te.includes?(@date)
+    assert ! te.includes?(@date+1)
+    assert te.includes?(@date+7)
+    assert te.includes?(@date+14)
+  end
+
+  def test_parse_week_interval_ignore_day_in_recurrence
+    te = TExp.parse("2008-02-14,2,1u")
+    assert te.includes?(@date)
+    assert te.includes?(@date+1)
+    assert !te.includes?(@date+3)
+  end
+
   def test_parse_month_interval
     te = TExp.parse("2008-02-14,1,0x")
     assert te.includes?(@date)
@@ -126,7 +141,7 @@ class ParseTest < Test::Unit::TestCase
   end
 
   def test_parse_year_interval_ignore_day_in_recurrence
-    te = TExp.parse("2008-02-14,1,1x")
+    te = TExp.parse("2008-02-14,1,1z")
     assert te.includes?(@date)
     assert te.includes?(@date+1)
     assert te.includes?(@date+365)

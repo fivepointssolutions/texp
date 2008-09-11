@@ -213,6 +213,105 @@ module TExp
   end # class Base
 
   ####################################################################
+  # Base class for temporal expressions which match dates that occur
+  # at an interval (i.e. every 3 days)
+  class IntervalBase < Base
+    def self.inherited(subclass)
+      class << subclass
+        def parse_callback(stack)
+          interval = stack.pop
+          date = stack.pop
+          stack.push TExp::DayInterval.new(date, interval)
+        end
+      end
+    end
+    
+    attr_reader :base_date, :interval
+
+    # Create a temporal expression that matches dates at _interval_
+    # from _base_date_
+    def initialize(name, base_date, interval)
+      @name = name
+      @base_date = base_date.kind_of?(Date) ? base_date : nil
+      @interval = interval
+    end
+
+    # Encode the temporal expression into +codes+.
+    def encode(codes)
+      if @base_date
+        encode_date(codes, @base_date)
+      else
+        codes << 0
+      end
+      codes << ','
+      encode_interval(codes)
+      codes << encoding_token
+    end
+
+    # Is +date+ included in the temporal expression.
+    def includes?(date)
+      if @base_date.nil? || date < @base_date
+        false
+      else
+        interval_includes?(date)
+      end
+    end
+
+    # Human readable version of the temporal expression.
+    def inspect
+      if @interval == 1
+        "every #{@name} starting on #{humanize_date(@base_date)}"
+      else
+        "every #{ordinal(@interval)} #{@name} starting on #{humanize_date(@base_date)}"
+      end
+    end
+
+    # Create a new temporal expression with a new anchor date.
+    def reanchor(new_anchor_date)
+      self.class.new(new_anchor_date, @interval)
+    end
+    
+    protected
+    
+    def encode_interval(codes)
+      codes << @interval
+    end
+  end
+  
+  ####################################################################
+  # Base class for temporal expressions which match dates that occur
+  # at an interval (i.e. every 3 weeks), or within the interval
+  class IntervalRangeBase < IntervalBase
+    def self.inherited(subclass)
+      class << subclass
+        def parse_callback(stack)
+          ignore_day_in_recurrence = stack.pop
+          interval = stack.pop
+          date = stack.pop
+          stack.push new(date, interval, (ignore_day_in_recurrence == 1))
+        end
+      end
+    end
+
+    def initialize(name, base_date, interval, ignore_day_in_recurrence = false)
+      super(name, base_date, interval)
+      @ignore_day_in_recurrence = ignore_day_in_recurrence
+    end
+
+    # Create a new temporal expression with a new anchor date.
+    def reanchor(new_anchor_date)
+      self.class.new(new_anchor_date, @interval, @ignore_day_in_recurrence)
+    end
+
+    protected
+
+    def encode_interval(codes)
+      super codes
+      codes << ',' << (@ignore_day_in_recurrence ? 1 : 0)
+    end
+  end
+
+  ####################################################################
   # Base class for temporal expressions with a single sub-expressions
   # (i.e. term).
   class SingleTermBase < Base
